@@ -28,10 +28,11 @@ async def echo_handler(message: types.Message):
             f"<a href='tg://user?id={message.from_user.id}'>"
             f"@{message.from_user.username}</a>"
         )
-        
+
     )
 
-    await message.answer(text, reply_markup=keyboard)
+    await message.answer(text, reply_markup=keyboard,
+                         disable_web_page_preview=True)
 
 
 def main() -> None:
