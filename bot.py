@@ -1,6 +1,22 @@
 from aiogram import Bot, Dispatcher, types, Router
+from aiogram.dispatcher.filters import ContentTypesFilter
+from aiogram.types import ContentType
+from datetime import datetime, timezone
 
 from config import TOKEN, MESSAGE_SCHEMA
+
+MEDIA_GROUPS = {}
+
+
+# Вынести в мидлварь
+def delete_media_group(media_groups: dict) -> None:
+    now = datetime.now(tz=timezone.utc)
+
+    return {
+        key: media_groups[key] for key in media_groups
+        if (now - media_groups[key]).total_seconds() <= 60
+    }
+
 
 router = Router()
 
@@ -18,10 +34,21 @@ def message_kb(button: dict) -> str:
 
 @router.message()
 async def echo_handler(message: types.Message):
+    global MEDIA_GROUPS
+
     if "button" in MESSAGE_SCHEMA and MESSAGE_SCHEMA["button"]:
         keyboard = message_kb(MESSAGE_SCHEMA["button"])
     else:
         keyboard = None
+
+    if (message.media_group_id is not None
+            and message.media_group_id not in MEDIA_GROUPS):
+        MEDIA_GROUPS[message.media_group_id] = message.date
+        MEDIA_GROUPS = delete_media_group(MEDIA_GROUPS)
+    elif (message.media_group_id is not None
+            and message.media_group_id in MEDIA_GROUPS):
+        return
+
     text = MESSAGE_SCHEMA["message"].replace(
         "«Имя»",
         (
